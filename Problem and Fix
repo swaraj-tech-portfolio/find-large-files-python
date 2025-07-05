@@ -1,0 +1,93 @@
+🛠️ Problem Statement (Quick Summary)
+- Faced issues cleaning up shared drive folders with unorganized and deeply nested files
+- Many files had random names and unclear purpose
+- Needed to find which files/folders were consuming huge space
+- Manual search was time-consuming and inefficient
+- Built this script to automate large file detection and cleanup planning
+
+
+✅ Code 
+
+import os
+from datetime import datetime
+
+def get_human_readable_size(size_in_bytes):
+    for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
+        if size_in_bytes < 1024:
+            return f"{size_in_bytes:.2f} {unit}"
+        size_in_bytes /= 1024
+
+def find_large_files(folder_path, size_threshold_mb=100, top_n=10):
+    large_files = []
+
+    for root, dirs, files in os.walk(folder_path):
+        for file in files:
+            file_path = os.path.join(root, file)
+            try:
+                size = os.path.getsize(file_path)
+                if size > size_threshold_mb * 1024 * 1024:
+                    modified = os.path.getmtime(file_path)
+                    large_files.append((file_path, size, modified))
+            except:
+                continue  # ignore permission errors etc.
+
+    large_files.sort(key=lambda x: x[1], reverse=True)
+
+    print(f"\nTop {top_n} largest files over {size_threshold_mb} MB in {folder_path}:\n")
+    for file_path, size, modified in large_files[:top_n]:
+        print(f"{get_human_readable_size(size)}\t{datetime.fromtimestamp(modified).strftime('%Y-%m-%d')}\t{file_path}")
+
+if __name__ == "__main__":
+    folder = input("Enter folder path to scan: ")
+    size_mb = int(input("Enter file size threshold in MB (e.g., 100): "))
+    top_n = int(input("How many top files to show?: "))
+    find_large_files(folder, size_mb, top_n)
+
+✅ Input: 
+
+Enter folder path to scan: E:\
+Enter file size threshold in MB (e.g., 100): 5
+How many top files to show?: 5
+
+✅Explanation:
+
+🔹 Purpose:
+This script scans a folder (and its subfolders) to find the top N largest files that are above a certain size (in MB) and displays:
+Size (in human-readable format)
+Last modified date
+Full file path
+
+🔹 import os, from datetime import datetime
+Used to access files/folders on disk and format timestamps.
+
+🔹 get_human_readable_size(size_in_bytes)
+Converts file size from bytes → KB/MB/GB for display.
+
+🔹 find_large_files(folder_path, size_threshold_mb=100, top_n=10)
+Walks through all files in the given folder (including subfolders).
+
+For each file:
+Gets file size
+If size is greater than the threshold, stores:
+File path
+Size in bytes
+Last modified date
+Sorts the files by size (largest first).
+Prints the top N largest files with:
+Human-readable size (e.g., 2.4 GB)
+Modified date (e.g., 2024-01-10)
+Full file path
+
+🔹 if __name__ == "__main__":
+Script takes user input for:
+
+Folder path to scan
+File size threshold (in MB)
+Number of top files to show
+Then it runs find_large_files() with those inputs.
+
+🔹 Summary:
+This is a quick utility to:
+- Audit disk space
+- Find big files buried in folders
+- Help clean up drives easily
